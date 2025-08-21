@@ -1,0 +1,54 @@
+/* Almagharabia-inspired palette: deep navy + gold + warm gray */
+:root {
+  --brand-navy: #0d1335; /* hero/navy */
+  --brand-navy-600: #151c49;
+  --brand-gold: #e8b14b; /* accent/cta */
+  --brand-gold-600: #d29a30;
+  --brand-warm-ink: #243043;
+}
+
+/* Utility helpers */
+.bg-brand-navy {
+  background-color: var(--brand-navy);
+}
+.bg-brand-navy-600 {
+  background-color: var(--brand-navy-600);
+}
+.text-brand-navy {
+  color: var(--brand-navy);
+}
+.text-brand-gold {
+  color: var(--brand-gold);
+}
+.border-brand-navy {
+  border-color: var(--brand-navy);
+}
+.border-brand-gold {
+  border-color: var(--brand-gold);
+}
+
+.btn-brand {
+  background-color: var(--brand-gold);
+  color: #0b0f29;
+}
+.btn-brand:hover {
+  background-color: var(--brand-gold-600);
+}
+
+/* Header tagline style */
+.tagline {
+  letter-spacing: .02em;
+  color: #e6e7ec;
+  opacity: 0.9;
+}
+
+/* Portal header minimal topbar */
+.portal-topbar {
+  background-color: var(--brand-navy);
+  color: #e6e7ec;
+}
+
+/* RTL helpers (we also flip dir on <html>) */
+[dir="rtl"] .flip-rtl {
+  transform: scaleX(-1);
+} /* example hook for icons */
