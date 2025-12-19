@@ -14,7 +14,18 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Home, Search, Package, Truck, FileText, MessageSquare, Users, BookOpen, Settings } from "lucide-react"
+import {
+  Home,
+  FolderKanban,
+  Search,
+  Package,
+  Truck,
+  FileText,
+  MessageSquare,
+  Users,
+  BookOpen,
+  Settings,
+} from "lucide-react"
 import Link from "next/link"
 import { LanguageToggle } from "./language-toggle"
 import { messagesStore } from "@/lib/messages/store"
@@ -23,6 +34,7 @@ import { Badge } from "@/components/ui/badge"
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Projects", url: "/projects", icon: FolderKanban },
   { title: "Sourcing Requests", url: "/sourcing-requests", icon: Search },
   { title: "Special Orders", url: "/dashboard/special-orders", icon: Package },
   { title: "Logistics & Compliance", url: "/dashboard/logistics-compliance", icon: Truck },
@@ -30,14 +42,13 @@ const items = [
   { title: "Messages & Updates", url: "/messages", icon: MessageSquare, showBadge: true },
   { title: "Resources", url: "/resources", icon: BookOpen },
   { title: "Account & Team", url: "/account-team", icon: Users },
-  { title: "Settings", url: "/dashboard/settings", icon: Settings },
+  { title: "Settings", url: "/settings", icon: Settings },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
   const [unreadCount, setUnreadCount] = useState(0)
 
-  // Update unread count
   useEffect(() => {
     const updateUnreadCount = () => {
       setUnreadCount(messagesStore.getTotalUnread())
@@ -45,7 +56,6 @@ export function AppSidebar() {
 
     updateUnreadCount()
 
-    // Poll for updates every 30 seconds
     const interval = setInterval(updateUnreadCount, 30000)
 
     return () => clearInterval(interval)

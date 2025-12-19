@@ -7,297 +7,349 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Filter, MessageSquare, Bell, AlertCircle, CheckCircle, Clock, Star, Archive } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  Search,
+  Send,
+  MoreVertical,
+  Paperclip,
+  Phone,
+  Video,
+  Archive,
+  Star,
+  Trash2,
+  MessageSquare,
+  Package,
+  Truck,
+  FileText,
+} from "lucide-react"
 import { messagesStore } from "@/lib/messages/store"
-import type { Message, MessageThread } from "@/lib/messages/types"
+import type { MessageConversation, Message } from "@/lib/messages/types"
+
+const typeIcons = {
+  request: Package,
+  shipment: Truck,
+  invoice: FileText,
+  general: MessageSquare,
+}
+
+const typeColors = {
+  request: "bg-blue-100 text-blue-800",
+  shipment: "bg-green-100 text-green-800",
+  invoice: "bg-yellow-100 text-yellow-800",
+  general: "bg-gray-100 text-gray-800",
+}
+
+const priorityColors = {
+  high: "border-l-red-500",
+  medium: "border-l-yellow-500",
+  low: "border-l-green-500",
+}
 
 export default function MessagesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
-  const [selectedThread, setSelectedThread] = useState<string | null>(null)
-  const [threads, setThreads] = useState<MessageThread[]>([])
+  const [newMessage, setNewMessage] = useState("")
+  const [conversations, setConversations] = useState<MessageConversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
 
   useEffect(() => {
-    // Load threads and messages
-    setThreads(messagesStore.getThreads())
-    setMessages(messagesStore.getMessages())
+    setConversations(messagesStore.getConversations())
   }, [])
 
-  const filteredThreads = threads.filter((thread) => {
+  useEffect(() => {
+    if (selectedConversation) {
+      setMessages(messagesStore.getMessages(selectedConversation))
+    }
+  }, [selectedConversation])
+
+  const filteredConversations = conversations.filter((conv) => {
     const matchesSearch =
-      thread.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      thread.participants.some((p) => p.toLowerCase().includes(searchTerm.toLowerCase()))
+      conv.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
 
-    if (activeTab === "all") return matchesSearch
-    if (activeTab === "unread") return matchesSearch && thread.unreadCount > 0
-    if (activeTab === "important") return matchesSearch && thread.priority === "high"
-    if (activeTab === "archived") return matchesSearch && thread.status === "archived"
+    const matchesTab =
+      activeTab === "all" || conv.type === activeTab || (activeTab === "unread" && conv.unreadCount > 0)
 
-    return matchesSearch
+    return matchesSearch && matchesTab
   })
 
-  const selectedThreadData = selectedThread ? threads.find((t) => t.id === selectedThread) : null
-  const threadMessages = selectedThread ? messages.filter((m) => m.threadId === selectedThread) : []
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !selectedConversation) return
 
-  const handleMarkAsRead = async (threadId: string) => {
-    try {
-      await fetch(`/api/messages/${threadId}/read`, { method: "POST" })
-      setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, unreadCount: 0 } : t)))
-    } catch (error) {
-      console.error("Failed to mark as read:", error)
-    }
+    messagesStore.sendMessage(selectedConversation, newMessage)
+    setMessages(messagesStore.getMessages(selectedConversation))
+    setConversations(messagesStore.getConversations())
+    setNewMessage("")
   }
 
-  const handleMarkAllAsRead = async () => {
-    try {
-      await fetch("/api/messages/read-all", { method: "POST" })
-      setThreads((prev) => prev.map((t) => ({ ...t, unreadCount: 0 })))
-    } catch (error) {
-      console.error("Failed to mark all as read:", error)
-    }
+  const handleMarkAsRead = (conversationId: string) => {
+    messagesStore.markAsRead(conversationId)
+    setConversations(messagesStore.getConversations())
   }
 
-  const formatTimeAgo = (timestamp: string) => {
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp)
     const now = new Date()
-    const time = new Date(timestamp)
-    const diffInHours = Math.floor((now.getTime() - time.getTime()) / (1000 * 60 * 60))
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
 
-    if (diffInHours < 1) return "Just now"
-    if (diffInHours < 24) return `${diffInHours}h ago`
-    const diffInDays = Math.floor(diffInHours / 24)
-    return `${diffInDays}d ago`
-  }
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return <AlertCircle className="h-4 w-4 text-red-500" />
-      case "medium":
-        return <Clock className="h-4 w-4 text-yellow-500" />
-      case "low":
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      default:
-        return null
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    } else if (diffInHours < 168) {
+      return date.toLocaleDateString([], { weekday: "short" })
+    } else {
+      return date.toLocaleDateString([], { month: "short", day: "numeric" })
     }
   }
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "quote":
-        return "bg-blue-100 text-blue-800"
-      case "shipment":
-        return "bg-green-100 text-green-800"
-      case "invoice":
-        return "bg-orange-100 text-orange-800"
-      case "system":
-        return "bg-gray-100 text-gray-800"
-      default:
-        return "bg-purple-100 text-purple-800"
-    }
-  }
+  const selectedConv = conversations.find((c) => c.id === selectedConversation)
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      {/* Header */}
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Messages & Updates</h2>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={handleMarkAllAsRead}>
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Mark All Read
-          </Button>
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Messages & Updates</h2>
+          <p className="text-muted-foreground mt-1">Communicate with suppliers and track updates</p>
         </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{messages.length}</div>
-            <p className="text-xs text-muted-foreground">Across all threads</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unread</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{threads.reduce((sum, t) => sum + t.unreadCount, 0)}</div>
-            <p className="text-xs text-muted-foreground">Require attention</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Priority</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{threads.filter((t) => t.priority === "high").length}</div>
-            <p className="text-xs text-muted-foreground">Urgent items</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Threads</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{threads.filter((t) => t.status === "active").length}</div>
-            <p className="text-xs text-muted-foreground">Ongoing conversations</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search */}
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search messages..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-        <Button variant="outline" size="sm">
-          <Filter className="mr-2 h-4 w-4" />
-          Filter
+        <Button variant="outline" onClick={() => messagesStore.markAllAsRead()}>
+          Mark All Read
         </Button>
       </div>
 
-      {/* Main Content */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Thread List */}
-        <div className="lg:col-span-1">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="unread">Unread</TabsTrigger>
-              <TabsTrigger value="important">Important</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={activeTab}>
-              <ScrollArea className="h-[600px]">
-                <div className="space-y-2">
-                  {filteredThreads.map((thread) => (
-                    <Card
-                      key={thread.id}
-                      className={`cursor-pointer transition-colors hover:bg-muted/50 ${
-                        selectedThread === thread.id ? "bg-muted" : ""
-                      }`}
-                      onClick={() => setSelectedThread(thread.id)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between space-x-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-1">
-                              {getPriorityIcon(thread.priority)}
-                              <Badge className={getTypeColor(thread.type)} variant="outline">
-                                {thread.type}
-                              </Badge>
-                              {thread.unreadCount > 0 && (
-                                <Badge variant="destructive" className="text-xs">
-                                  {thread.unreadCount}
-                                </Badge>
-                              )}
-                            </div>
-                            <h4 className="font-medium truncate" title={thread.subject}>
-                              {thread.subject}
-                            </h4>
-                            <p className="text-sm text-muted-foreground truncate">{thread.lastMessage}</p>
-                            <div className="flex items-center justify-between mt-2">
-                              <span className="text-xs text-muted-foreground">{thread.participants.join(", ")}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {formatTimeAgo(thread.lastActivity)}
-                              </span>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
+        {/* Conversations List */}
+        <Card className="lg:col-span-4 flex flex-col">
+          <CardHeader className="pb-3">
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search conversations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0 flex-1 flex flex-col">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1">
+              <div className="px-4 pb-3">
+                <TabsList className="grid w-full grid-cols-5 h-auto">
+                  <TabsTrigger value="all" className="text-xs">
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="unread" className="text-xs">
+                    <span className="hidden sm:inline">Unread</span>
+                    <span className="sm:hidden">New</span>
+                    {messagesStore.getTotalUnread() > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="ml-1 text-xs h-4 w-4 p-0 flex items-center justify-center"
+                      >
+                        {messagesStore.getTotalUnread()}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="request" className="text-xs">
+                    <span className="hidden sm:inline">Requests</span>
+                    <Package className="h-3 w-3 sm:hidden" />
+                  </TabsTrigger>
+                  <TabsTrigger value="shipment" className="text-xs">
+                    <span className="hidden sm:inline">Logistics</span>
+                    <Truck className="h-3 w-3 sm:hidden" />
+                  </TabsTrigger>
+                  <TabsTrigger value="invoice" className="text-xs">
+                    <span className="hidden sm:inline">Invoices</span>
+                    <FileText className="h-3 w-3 sm:hidden" />
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              <TabsContent value={activeTab} className="mt-0 flex-1">
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-2 px-4 pb-4">
+                    {filteredConversations.map((conversation) => {
+                      const TypeIcon = typeIcons[conversation.type]
+                      return (
+                        <div
+                          key={conversation.id}
+                          className={`p-3 rounded-lg cursor-pointer transition-colors border-l-4 ${
+                            priorityColors[conversation.priority]
+                          } ${selectedConversation === conversation.id ? "bg-accent" : "hover:bg-accent/50"}`}
+                          onClick={() => {
+                            setSelectedConversation(conversation.id)
+                            if (conversation.unreadCount > 0) {
+                              handleMarkAsRead(conversation.id)
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <TypeIcon className="h-4 w-4 text-muted-foreground mt-1 shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-sm font-medium line-clamp-1">{conversation.title}</p>
+                                  <span className="text-xs text-muted-foreground shrink-0">
+                                    {formatTime(conversation.lastMessageTime)}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+                                  {conversation.lastMessage}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                  <Badge variant="secondary" className={`text-xs ${typeColors[conversation.type]}`}>
+                                    {conversation.type}
+                                  </Badge>
+                                  {conversation.unreadCount > 0 && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      {conversation.unreadCount}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-        </div>
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
 
         {/* Message View */}
-        <div className="lg:col-span-2">
-          {selectedThreadData ? (
-            <Card className="h-[600px] flex flex-col">
-              <CardHeader className="border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center space-x-2">
-                      {getPriorityIcon(selectedThreadData.priority)}
-                      <span>{selectedThreadData.subject}</span>
-                    </CardTitle>
-                    <CardDescription>{selectedThreadData.participants.join(", ")}</CardDescription>
+        <Card className="lg:col-span-8 flex flex-col">
+          {selectedConv ? (
+            <>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-lg line-clamp-1">{selectedConv.title}</CardTitle>
+                    <CardDescription className="mt-1">
+                      {selectedConv.participants.length} participants • {selectedConv.type}
+                    </CardDescription>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getTypeColor(selectedThreadData.type)}>{selectedThreadData.type}</Badge>
-                    <Button variant="outline" size="sm" onClick={() => handleMarkAsRead(selectedThreadData.id)}>
-                      <CheckCircle className="h-4 w-4" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button variant="ghost" size="sm">
+                      <Phone className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <Archive className="h-4 w-4" />
+                    <Button variant="ghost" size="sm">
+                      <Video className="h-4 w-4" />
                     </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Star className="mr-2 h-4 w-4" />
+                          Star Conversation
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Archive className="mr-2 h-4 w-4" />
+                          Archive
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardHeader>
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {threadMessages.map((message) => (
-                    <div key={message.id} className="flex items-start space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>
-                          {message.sender
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium text-sm">{message.sender}</span>
-                          <span className="text-xs text-muted-foreground">{formatTimeAgo(message.timestamp)}</span>
-                          {!message.read && <div className="w-2 h-2 bg-blue-500 rounded-full" />}
-                        </div>
-                        <div className="text-sm">{message.content}</div>
-                        {message.attachments && message.attachments.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {message.attachments.map((attachment, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {attachment}
-                              </Badge>
-                            ))}
+              <Separator />
+              <CardContent className="p-0 flex-1 flex flex-col">
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.senderRole === "user" ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[85%] md:max-w-[75%] rounded-lg p-3 ${
+                            message.senderRole === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                          }`}
+                        >
+                          {message.senderRole !== "user" && (
+                            <div className="flex items-center gap-2 mb-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src="/placeholder-user.jpg" />
+                                <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium">{message.senderName}</span>
+                            </div>
+                          )}
+                          <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                          {message.attachments && message.attachments.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {message.attachments.map((attachment) => (
+                                <div
+                                  key={attachment.id}
+                                  className="flex items-center gap-2 p-2 bg-background/10 rounded"
+                                >
+                                  <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="text-sm line-clamp-1">{attachment.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex items-center justify-end mt-2">
+                            <span className="text-xs opacity-70">{formatTime(message.timestamp)}</span>
                           </div>
-                        )}
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <Separator />
+                <div className="p-4">
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder="Type your message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault()
+                            handleSendMessage()
+                          }
+                        }}
+                        className="min-h-[80px] resize-none"
+                      />
                     </div>
-                  ))}
+                    <div className="flex flex-col gap-2">
+                      <Button variant="ghost" size="sm" className="h-9 w-9">
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                      <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="h-9 w-9" size="sm">
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </ScrollArea>
-            </Card>
+              </CardContent>
+            </>
           ) : (
-            <Card className="h-[600px] flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
-                <h3 className="text-lg font-medium">Select a conversation</h3>
-                <p className="text-sm text-muted-foreground">Choose a thread from the list to view messages</p>
+            <CardContent className="flex items-center justify-center flex-1">
+              <div className="text-center py-12">
+                <MessageSquare className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
+                <p className="text-muted-foreground text-sm">Choose a conversation from the list to start messaging</p>
               </div>
-            </Card>
+            </CardContent>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   )

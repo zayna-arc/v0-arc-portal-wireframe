@@ -8,7 +8,7 @@ import {
   BookOpen,
   FileText,
   Link,
-  PenToolIcon as Tool,
+  PenTool as Tool,
   TrendingUp,
   Bookmark,
   BookmarkCheck,
@@ -208,7 +208,7 @@ export default function ResourcesPage() {
     const canAccess = canAccessResource(resource)
 
     return (
-      <Card className="h-full flex flex-col">
+      <Card className="flex flex-col h-full">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -216,10 +216,10 @@ export default function ResourcesPage() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <CardTitle className="text-sm font-medium truncate cursor-help">{resource.title}</CardTitle>
+                    <CardTitle className="text-sm font-medium line-clamp-1 cursor-help">{resource.title}</CardTitle>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{resource.title}</p>
+                    <p className="max-w-xs">{resource.title}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -229,26 +229,26 @@ export default function ResourcesPage() {
               <FormatIcon className="h-3 w-3 text-muted-foreground" />
             </div>
           </div>
-          <CardDescription className="text-xs line-clamp-2">{resource.description}</CardDescription>
+          <CardDescription className="text-xs line-clamp-2 mt-1">{resource.description}</CardDescription>
         </CardHeader>
 
         <CardContent className="pt-0 flex-1 flex flex-col">
-          <div className="flex flex-wrap gap-1 mb-3">
+          <div className="flex flex-wrap gap-1.5 mb-3">
             {resource.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs px-1.5 py-0.5">
+              <Badge key={tag} variant="secondary" className="text-xs px-2 py-0.5">
                 {tag}
               </Badge>
             ))}
             {resource.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+              <Badge variant="outline" className="text-xs px-2 py-0.5">
                 +{resource.tags.length - 3}
               </Badge>
             )}
           </div>
 
-          <div className="flex flex-wrap gap-1 mb-3">
+          <div className="flex flex-wrap gap-1.5 mb-3">
             {resource.languages.map((lang) => (
-              <span key={lang} className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${languageColors[lang]}`}>
+              <span key={lang} className={`text-xs px-2 py-0.5 rounded-full font-medium ${languageColors[lang]}`}>
                 {lang}
               </span>
             ))}
@@ -260,30 +260,34 @@ export default function ResourcesPage() {
               {resource.fileSize && <span>{resource.fileSize}</span>}
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 variant={canAccess ? "default" : "secondary"}
-                className="flex-1 text-xs h-7"
+                className="flex-1 text-xs h-8"
                 onClick={() => handleResourceClick(resource)}
               >
                 {resource.format === "TOOL" ? "Open" : resource.format === "LINK" ? "Visit" : "Download"}
               </Button>
 
-              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleSaveResource(resource.id)}>
-                {isSaved ? <BookmarkCheck className="h-3 w-3 text-blue-600" /> : <Bookmark className="h-3 w-3" />}
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleSaveResource(resource.id)}>
+                {isSaved ? (
+                  <BookmarkCheck className="h-3.5 w-3.5 text-blue-600" />
+                ) : (
+                  <Bookmark className="h-3.5 w-3.5" />
+                )}
               </Button>
 
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 w-7 p-0"
+                className="h-8 w-8 p-0"
                 onClick={() => {
                   setSelectedResource(resource)
                   setShowAttachDialog(true)
                 }}
               >
-                <Paperclip className="h-3 w-3" />
+                <Paperclip className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
@@ -294,11 +298,11 @@ export default function ResourcesPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-6 max-w-7xl mx-auto">
         <div className="h-8 bg-muted rounded animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-64 bg-muted rounded animate-pulse" />
+            <div key={i} className="h-80 bg-muted rounded animate-pulse" />
           ))}
         </div>
       </div>
@@ -306,12 +310,12 @@ export default function ResourcesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Resources</h1>
-          <p className="text-muted-foreground">Templates, guides, and tools for international trade</p>
+          <p className="text-muted-foreground text-balance">Templates, guides, and tools for international trade</p>
         </div>
 
         <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
@@ -339,26 +343,27 @@ export default function ResourcesPage() {
                 })
               }}
             >
-              <div className="space-y-4">
-                <div>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
                   <Label htmlFor="title">Resource Title</Label>
                   <Input id="title" name="title" placeholder="e.g., Morocco Import License Template" required />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="need">What do you need?</Label>
                   <Textarea
                     id="need"
                     name="need"
                     placeholder="Describe what you're looking for and how it would help your business..."
+                    rows={4}
                     required
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="deadline">When do you need this?</Label>
                   <Input id="deadline" name="deadline" type="date" required />
                 </div>
               </div>
-              <DialogFooter className="mt-6">
+              <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setShowRequestDialog(false)}>
                   Cancel
                 </Button>
@@ -371,7 +376,7 @@ export default function ResourcesPage() {
 
       {/* Search and Filters */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -381,13 +386,13 @@ export default function ResourcesPage() {
               className="pl-10"
             />
           </div>
-          <Button variant="outline" size="sm" className="sm:w-auto bg-transparent">
+          <Button variant="outline" className="sm:w-auto bg-transparent">
             <Filter className="h-4 w-4 mr-2" />
             Filters
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <Select
             value={filters.region}
             onValueChange={(value: Region | "all") => setFilters((prev) => ({ ...prev, region: value }))}
@@ -460,7 +465,7 @@ export default function ResourcesPage() {
           <h2 className="text-lg font-semibold">Pinned by ARC</h2>
           <Badge variant="secondary">Curated</Badge>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {pinnedResources.map((resource) => (
             <ResourceCard key={resource.id} resource={resource} />
           ))}
@@ -471,29 +476,43 @@ export default function ResourcesPage() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ResourceType | "all")}>
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="template">Templates</TabsTrigger>
-          <TabsTrigger value="guide">Guides</TabsTrigger>
-          <TabsTrigger value="regulatory">Regulatory</TabsTrigger>
-          <TabsTrigger value="tool">Tools</TabsTrigger>
-          <TabsTrigger value="market_brief">Market Briefs</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-2">
+          <TabsList className="inline-flex w-auto min-w-full lg:grid lg:grid-cols-6">
+            <TabsTrigger value="all" className="flex-1 lg:flex-none">
+              All
+            </TabsTrigger>
+            <TabsTrigger value="template" className="flex-1 lg:flex-none">
+              Templates
+            </TabsTrigger>
+            <TabsTrigger value="guide" className="flex-1 lg:flex-none">
+              Guides
+            </TabsTrigger>
+            <TabsTrigger value="regulatory" className="flex-1 lg:flex-none">
+              Regulatory
+            </TabsTrigger>
+            <TabsTrigger value="tool" className="flex-1 lg:flex-none">
+              Tools
+            </TabsTrigger>
+            <TabsTrigger value="market_brief" className="flex-1 lg:flex-none">
+              Market Briefs
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value={activeTab} className="mt-6">
           {filters.access === "saved" ? (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">My Library ({myLibraryResources.length})</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {myLibraryResources.map((resource) => (
                   <ResourceCard key={resource.id} resource={resource} />
                 ))}
               </div>
               {myLibraryResources.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-16 text-muted-foreground">
                   <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No saved resources yet</p>
-                  <p className="text-sm">Save resources to access them quickly later</p>
+                  <p className="font-medium">No saved resources yet</p>
+                  <p className="text-sm mt-1">Save resources to access them quickly later</p>
                 </div>
               )}
             </div>
@@ -502,16 +521,16 @@ export default function ResourcesPage() {
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">{filteredResources.length} resources found</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredResources.map((resource) => (
                   <ResourceCard key={resource.id} resource={resource} />
                 ))}
               </div>
               {filteredResources.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-16 text-muted-foreground">
                   <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No resources found</p>
-                  <p className="text-sm">Try adjusting your search or filters</p>
+                  <p className="font-medium">No resources found</p>
+                  <p className="text-sm mt-1">Try adjusting your search or filters</p>
                 </div>
               )}
             </div>
@@ -521,7 +540,7 @@ export default function ResourcesPage() {
 
       {/* Footer */}
       <div className="border-t pt-6 space-y-4">
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <span className="text-sm text-muted-foreground">Did this help?</span>
           <div className="flex gap-2">
             <Button
@@ -541,8 +560,8 @@ export default function ResourcesPage() {
           </div>
         </div>
 
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">
+        <div className="text-center max-w-3xl mx-auto">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             <strong>Disclaimer:</strong> These resources provide general guidance and are not legal advice. Always
             consult with qualified professionals for specific situations.
           </p>
@@ -556,7 +575,7 @@ export default function ResourcesPage() {
             <DialogTitle>Attach to Request</DialogTitle>
             <DialogDescription>Select a request to attach "{selectedResource?.title}" to.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Select Request</Label>
               <Select>
@@ -587,13 +606,13 @@ export default function ResourcesPage() {
             <DialogTitle>Upgrade Required</DialogTitle>
             <DialogDescription>This resource requires a higher membership tier to access.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm">
+          <div className="space-y-4 py-4">
+            <p className="text-sm leading-relaxed">
               Upgrade your membership to access premium resources, advanced tools, and exclusive market insights.
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button className="flex-1">Upgrade Now</Button>
-              <Button variant="outline" onClick={() => setShowUpgradeModal(false)}>
+              <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowUpgradeModal(false)}>
                 Maybe Later
               </Button>
             </div>

@@ -54,14 +54,14 @@ export default function SpecialOrders() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <div className="flex h-screen items-center justify-center">
-            <Card className="max-w-md">
+          <div className="flex h-screen items-center justify-center p-6">
+            <Card className="max-w-md w-full">
               <CardHeader>
                 <CardTitle>Membership Required</CardTitle>
                 <CardDescription>Activate your membership to access special orders</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button asChild>
+                <Button asChild className="w-full">
                   <a href="/welcome">Activate Membership</a>
                 </Button>
               </CardContent>
@@ -82,11 +82,11 @@ export default function SpecialOrders() {
           <h2 className="font-semibold">Special Orders</h2>
         </header>
 
-        <div className="p-4 space-y-6">
+        <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
           {/* Info Card */}
           <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
+            <Info className="h-4 w-4 shrink-0" />
+            <AlertDescription className="leading-relaxed">
               Special orders are for unique items like auction vehicles, custom machinery, or hard-to-find equipment.
               Coordination fees are billed separately; inspection and freight costs are at cost.
             </AlertDescription>
@@ -101,74 +101,86 @@ export default function SpecialOrders() {
               </CardTitle>
               <CardDescription>Submit details for one-off items, auctions, or custom equipment</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="item-type">Item Type</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="auction-vehicle">Auction Vehicle</SelectItem>
-                      <SelectItem value="custom-machinery">Custom Machinery</SelectItem>
-                      <SelectItem value="rare-equipment">Rare Equipment</SelectItem>
-                      <SelectItem value="government-surplus">Government Surplus</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+            <CardContent>
+              <form className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="item-type">Item Type</Label>
+                    <Select>
+                      <SelectTrigger id="item-type">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auction-vehicle">Auction Vehicle</SelectItem>
+                        <SelectItem value="custom-machinery">Custom Machinery</SelectItem>
+                        <SelectItem value="rare-equipment">Rare Equipment</SelectItem>
+                        <SelectItem value="government-surplus">Government Surplus</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="budget-cap">Budget Cap</Label>
+                    <Input id="budget-cap" placeholder="$100,000" />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="budget-cap">Budget Cap</Label>
-                  <Input id="budget-cap" placeholder="$100,000" />
+
+                <div className="space-y-2">
+                  <Label htmlFor="link-lot">Link/Lot Number</Label>
+                  <Input id="link-lot" placeholder="Auction link or lot number" />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="link-lot">Link/Lot Number</Label>
-                <Input id="link-lot" placeholder="Auction link or lot number" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="needed-by">Needed By Date</Label>
-                  <Input id="needed-by" type="date" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="needed-by">Needed By Date</Label>
+                    <Input id="needed-by" type="date" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="origin">Origin Location</Label>
+                    <Input id="origin" placeholder="City, State/Country" />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="origin">Origin Location</Label>
-                  <Input id="origin" placeholder="City, State/Country" />
+
+                <div className="space-y-2">
+                  <Label htmlFor="destination">Destination</Label>
+                  <Input id="destination" placeholder="Final destination" />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="destination">Destination</Label>
-                <Input id="destination" placeholder="Final destination" />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Item Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Detailed description of the item, specifications, condition requirements, etc."
-                  rows={4}
-                />
-              </div>
-
-              <div>
-                <Label>Photos/Documents</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-600">Drop photos, auction listings, or spec sheets here</p>
-                  <p className="text-xs text-gray-500 mt-1">JPG, PNG, PDF up to 10MB each</p>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Item Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Detailed description of the item, specifications, condition requirements, etc."
+                    rows={4}
+                    className="resize-none"
+                  />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea id="notes" placeholder="Any special requirements, constraints, or preferences..." rows={3} />
-              </div>
+                <div className="space-y-2">
+                  <Label>Photos/Documents</Label>
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors">
+                    <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground font-medium">
+                      Drop photos, auction listings, or spec sheets here
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">JPG, PNG, PDF up to 10MB each</p>
+                  </div>
+                </div>
 
-              <Button className="w-full btn-brand">Submit Special Order Request</Button>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Additional Notes</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Any special requirements, constraints, or preferences..."
+                    rows={3}
+                    className="resize-none"
+                  />
+                </div>
+
+                <Button type="submit" className="w-full">
+                  Submit Special Order Request
+                </Button>
+              </form>
             </CardContent>
           </Card>
 
@@ -180,40 +192,44 @@ export default function SpecialOrders() {
             </CardHeader>
             <CardContent>
               {mockOrders.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <div className="text-center py-16">
+                  <Package className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No special orders yet</h3>
-                  <p className="text-gray-600">Submit your first special order request above</p>
+                  <p className="text-muted-foreground">Submit your first special order request above</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order ID</TableHead>
-                      <TableHead>Item Type</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Budget</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Submitted</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockOrders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.id}</TableCell>
-                        <TableCell>{order.itemType}</TableCell>
-                        <TableCell className="max-w-xs truncate">{order.description}</TableCell>
-                        <TableCell>{order.budget}</TableCell>
-                        <TableCell>
-                          <Badge variant={statusColors[order.status as keyof typeof statusColors]}>
-                            {order.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-gray-600">{order.submittedAt}</TableCell>
+                <div className="overflow-x-auto -mx-6 px-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[100px]">Order ID</TableHead>
+                        <TableHead>Item Type</TableHead>
+                        <TableHead className="min-w-[200px]">Description</TableHead>
+                        <TableHead>Budget</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Submitted</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {mockOrders.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">{order.id}</TableCell>
+                          <TableCell className="whitespace-nowrap">{order.itemType}</TableCell>
+                          <TableCell className="max-w-xs">
+                            <p className="line-clamp-2 leading-relaxed">{order.description}</p>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{order.budget}</TableCell>
+                          <TableCell>
+                            <Badge variant={statusColors[order.status as keyof typeof statusColors]}>
+                              {order.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground whitespace-nowrap">{order.submittedAt}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>

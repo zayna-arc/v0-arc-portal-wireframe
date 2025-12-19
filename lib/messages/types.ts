@@ -1,50 +1,46 @@
-export type LinkedType = "request" | "shipment" | "invoice" | "general"
-
-export interface Conversation {
-  id: string // e.g., "SR-1023"
-  subject: string // "3x Excavators"
-  linkedType: LinkedType // request|shipment|invoice|general
-  linkedId?: string // e.g., sourcing request id
-  status?: string // Draft/In progress/Quoted/Closed/etc.
-  lastActivityAt: string // ISO
-  unreadCount: number
-  participants: { id: string; name: string; role: "customer" | "advisor" }[]
+export interface Participant {
+  id: string
+  name: string
+  role: "customer" | "advisor" | "supplier" | "logistics" | "finance"
 }
 
-export type ThreadItemType = "text" | "file" | "system"
+export interface Conversation {
+  id: string
+  subject: string
+  linkedType: "request" | "invoice" | "shipment" | "general"
+  linkedId: string
+  status: string
+  lastActivityAt: string
+  unreadCount: number
+  participants: Participant[]
+}
 
 export interface ThreadItem {
   id: string
   conversationId: string
-  type: ThreadItemType
-  author?: { id: string; name: string; role: "customer" | "advisor" } // undefined for system
-  body?: string // markdown/plain for text
-  file?: { name: string; sizeKB: number } // metadata only
+  type: "text" | "system"
+  author?: Participant
+  body?: string
   event?: {
-    kind:
-      | "status_changed"
-      | "quote_posted"
-      | "doc_uploaded"
-      | "doc_approved"
-      | "inspection_scheduled"
-      | "freight_quote_ready"
-      | "invoice_created"
-      | "payment_succeeded"
-      | "payment_failed"
-      | "subscription_activated"
+    kind: string
     data: Record<string, any>
   }
-  createdAt: string // ISO
+  file?: {
+    name: string
+    size: number
+    type: string
+  }
+  createdAt: string
 }
 
 export interface LinkedObject {
   id: string
-  type: LinkedType
-  status?: string
+  type: "request" | "invoice" | "shipment"
+  status: string
   assignee?: string
   dueDate?: string
   value?: string
-  details?: Record<string, any>
+  details: Record<string, any>
 }
 
 export interface ChecklistItem {
@@ -52,3 +48,72 @@ export interface ChecklistItem {
   label: string
   completed: boolean
 }
+
+export interface MessageThread {
+  id: string
+  title: string
+  type: "request" | "shipment" | "invoice" | "general"
+  lastMessage: string
+  lastMessageTime: string
+  unreadCount: number
+  priority: "low" | "medium" | "high"
+  status: "active" | "archived"
+  participants: string[]
+}
+
+export interface Message {
+  id: string
+  senderId: string
+  senderName: string
+  senderRole: "user" | "supplier" | "admin" | "system"
+  content: string
+  timestamp: string
+  type: "text" | "file" | "system"
+  attachments?: MessageAttachment[]
+  isRead: boolean
+}
+
+export interface MessageConversation {
+  id: string
+  title: string
+  type: "request" | "shipment" | "invoice" | "general"
+  participants: string[]
+  lastMessage: string
+  lastMessageTime: string
+  unreadCount: number
+  status: "active" | "archived"
+  priority: "low" | "medium" | "high"
+  linkedId?: string
+  linkedType?: "request" | "shipment" | "invoice"
+  messages: MessageItem[]
+}
+
+export interface MessageItem {
+  id: string
+  conversationId: string
+  senderId: string
+  senderName: string
+  senderRole: "user" | "supplier" | "admin" | "system"
+  content: string
+  timestamp: string
+  type: "text" | "file" | "system"
+  attachments?: MessageAttachment[]
+  readBy: string[]
+}
+
+export interface MessageAttachment {
+  id: string
+  name: string
+  size: number
+  type: string
+  url: string
+}
+
+export interface MessageFilters {
+  search: string
+  type: "all" | "request" | "shipment" | "invoice" | "general"
+  status: "all" | "active" | "archived"
+  unreadOnly: boolean
+}
+
+export type Priority = "high" | "medium" | "low"
